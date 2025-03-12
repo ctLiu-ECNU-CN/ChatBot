@@ -1,0 +1,196 @@
+{
+  "version": 3,
+  "targets": {
+    "net9.0": {
+      "MyBot/1.8.0.14": {
+        "type": "package",
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.1"
+        },
+        "compile": {
+          "lib/net8.0/MyBot.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/MyBot.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Newtonsoft.Json/13.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Tencent.QCloud.Cos.Sdk/5.4.44": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/COSXML.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/COSXML.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "MyBot/1.8.0.14": {
+      "sha512": "JTYnhBonFAt/7CktN4A2JPh7dWc75eZ3hUZ0RQzZxKp3nbOwsZFOHX5ub1Y/mSyqp5iLP73sLr8uFl1caD2Wag==",
+      "type": "package",
+      "path": "mybot/1.8.0.14",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Logo.png",
+        "README.md",
+        "lib/net6.0/MyBot.dll",
+        "lib/net6.0/MyBot.xml",
+        "lib/net7.0/MyBot.dll",
+        "lib/net7.0/MyBot.xml",
+        "lib/net8.0/MyBot.dll",
+        "lib/net8.0/MyBot.xml",
+        "mybot.1.8.0.14.nupkg.sha512",
+        "mybot.nuspec"
+      ]
+    },
+    "Newtonsoft.Json/13.0.1": {
+      "sha512": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A==",
+      "type": "package",
+      "path": "newtonsoft.json/13.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.md",
+        "lib/net20/Newtonsoft.Json.dll",
+        "lib/net20/Newtonsoft.Json.xml",
+        "lib/net35/Newtonsoft.Json.dll",
+        "lib/net35/Newtonsoft.Json.xml",
+        "lib/net40/Newtonsoft.Json.dll",
+        "lib/net40/Newtonsoft.Json.xml",
+        "lib/net45/Newtonsoft.Json.dll",
+        "lib/net45/Newtonsoft.Json.xml",
+        "lib/netstandard1.0/Newtonsoft.Json.dll",
+        "lib/netstandard1.0/Newtonsoft.Json.xml",
+        "lib/netstandard1.3/Newtonsoft.Json.dll",
+        "lib/netstandard1.3/Newtonsoft.Json.xml",
+        "lib/netstandard2.0/Newtonsoft.Json.dll",
+        "lib/netstandard2.0/Newtonsoft.Json.xml",
+        "newtonsoft.json.13.0.1.nupkg.sha512",
+        "newtonsoft.json.nuspec",
+        "packageIcon.png"
+      ]
+    },
+    "Tencent.QCloud.Cos.Sdk/5.4.44": {
+      "sha512": "gWFk6/0XMA7WiZsdNN6d+ZRLKl9i1fUfH9QABdjotflJp1e8iF2UoCbMMwxKr+8DfRAzMTNCxWwO5oeFM3v5Vg==",
+      "type": "package",
+      "path": "tencent.qcloud.cos.sdk/5.4.44",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net45/COSXML.dll",
+        "lib/netstandard2.0/COSXML.dll",
+        "tencent.qcloud.cos.sdk.5.4.44.nupkg.sha512",
+        "tencent.qcloud.cos.sdk.nuspec"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net9.0": [
+      "MyBot >= 1.8.0.14",
+      "Newtonsoft.Json >= 13.0.1",
+      "Tencent.QCloud.Cos.Sdk >= 5.4.44"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\ctLiu\\.nuget\\packages\\": {},
+    "G:\\dataSpace\\VisualStudio\\SDK\\NuGetPackages": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "G:\\workSpaces\\RiderProject\\ConsoleApp1\\ConsoleApp1\\ConsoleApp1.csproj",
+      "projectName": "ConsoleApp1",
+      "projectPath": "G:\\workSpaces\\RiderProject\\ConsoleApp1\\ConsoleApp1\\ConsoleApp1.csproj",
+      "packagesPath": "C:\\Users\\ctLiu\\.nuget\\packages\\",
+      "outputPath": "G:\\workSpaces\\RiderProject\\ConsoleApp1\\ConsoleApp1\\obj\\",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "G:\\dataSpace\\VisualStudio\\SDK\\NuGetPackages"
+      ],
+      "configFilePaths": [
+        "C:\\Users\\ctLiu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net9.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "9.0.200"
+    },
+    "frameworks": {
+      "net9.0": {
+        "targetAlias": "net9.0",
+        "dependencies": {
+          "MyBot": {
+            "target": "Package",
+            "version": "[1.8.0.14, )"
+          },
+          "Newtonsoft.Json": {
+            "target": "Package",
+            "version": "[13.0.1, )"
+          },
+          "Tencent.QCloud.Cos.Sdk": {
+            "target": "Package",
+            "version": "[5.4.44, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.200/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}
