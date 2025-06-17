@@ -9,9 +9,7 @@
 
     <ItemGroup>
       <PackageReference Include="MyBot" Version="1.8.0.14" />
-      <PackageReference Include="MySql.Data" Version="9.2.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-      <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
       <PackageReference Include="Tencent.QCloud.Cos.Sdk" Version="5.4.44" />
     </ItemGroup>
 

@@ -1,197 +1,113 @@
 ﻿using System;
-using System.Data;
-using MySql.Data.MySqlClient;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using ConsoleApp1.models;
+using MyBot.Models;
 
 namespace MyBot.Services
 {
     public class SignService
     {
-        private readonly DatabaseService _dbService;
-        private const int DailyPoints = 10;
-        private const int WeeklyBonus = 50;
+        private readonly string _signRecordsFilePath;
+        private const int DailyPoints = 10; // 每日签到积分
+        private const int WeeklyBonus = 50; // 连续签到一周的额外积分
 
-        public SignService(DatabaseService dbService)
+        public SignService(string signRecordsFilePath)
         {
-            _dbService = dbService;
+            _signRecordsFilePath = signRecordsFilePath;
+
+            // 如果文件不存在，则创建一个空列表
+            if (!File.Exists(_signRecordsFilePath))
+            {
+                File.WriteAllText(_signRecordsFilePath, "[]");
+            }
         }
 
-        public string Sign(string userId)
+        // 获取所有签到记录
+        private List<SignRecord> LoadSignRecords()
         {
-            using var conn = _dbService.CreateConnection();
-            conn.Open();
-            using var transaction = conn.BeginTransaction();
+            var jsonString = File.ReadAllText(_signRecordsFilePath);
+
+            // 如果文件内容为空，则返回一个空列表
+            if (string.IsNullOrWhiteSpace(jsonString))
+            {
+                return new List<SignRecord>();
+            }
+
             try
             {
-                if (HasSignedToday(userId, conn, transaction))
-                    return "今日已签到，请明天再来！";
-
-                var (currentPoints, consecutiveDays) = GetUserStats(userId, conn, transaction);
-                consecutiveDays = CalculateConsecutiveDays(userId, consecutiveDays, conn, transaction);
-                int points = CalculatePoints(consecutiveDays);
-
-                UpdateUserRecord(userId, points, consecutiveDays, conn, transaction);
-                LogSignActivity(userId, points, conn, transaction);
-
-                int todaySignCount = GetTodaySignCount(conn, transaction);
-                transaction.Commit();
-
-                return $"签到成功！获得 {points} 积分（总积分：{currentPoints + points}），" +
-                       $"连续签到 {consecutiveDays} 天。今日第 {todaySignCount} 位签到用户。";
+                return JsonSerializer.Deserialize<List<SignRecord>>(jsonString) ?? new List<SignRecord>();
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
-                transaction.Rollback();
-                Console.WriteLine($"[签到异常] {ex}");
-                return "签到失败，请稍后再试或联系管理员";
+                Console.WriteLine($"JSON 解析失败: {ex.Message}");
+                return new List<SignRecord>();
             }
         }
 
-        private bool HasSignedToday(string userId, MySqlConnection conn, MySqlTransaction transaction)
+        // 保存签到记录
+        private void SaveSignRecords(List<SignRecord> records)
         {
-            const string query = @"
-                SELECT COUNT(*) 
-                FROM sign_logs 
-                WHERE user_id = @userId 
-                AND DATE(sign_time) = CURDATE()";
-
-            return _dbService.ExecuteScalar<int>(conn, transaction, query, new MySqlParameter("@userId", userId)
-            ) > 0;
+            var jsonString = JsonSerializer.Serialize(records, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_signRecordsFilePath, jsonString);
         }
 
-        private (int points, int days) GetUserStats(string userId, MySqlConnection conn, MySqlTransaction transaction)
+        // 用户签到
+        public string Sign(string userId)
         {
-            const string query = @"
-                SELECT total_points, consecutive_days 
-                FROM users 
-                WHERE user_id = @userId 
-                FOR UPDATE";
+            var records = LoadSignRecords();
 
-            using var reader = _dbService.ExecuteReader(conn, transaction, query, new MySqlParameter("@userId", userId)
-            );
-            if (reader.Read())
+            // 检查用户是否已经签到过
+            var today = DateTime.Today;
+            var userRecord = records.FirstOrDefault(r => r.UserId == userId);
+
+            if (userRecord != null && userRecord.SignTime.Date == today)
             {
-                return (
-                    reader.GetInt32("total_points"),
-                    reader.GetInt32("consecutive_days")
-                );
+                return "今日已签到，请明天再来！";
             }
 
-            reader.Close();
-            InitializeNewUser(userId, conn, transaction);
+            // 统计当天签到人数
+            int todaySignCount = records.Count(r => r.SignTime.Date == today);
 
-            using var newReader = _dbService.ExecuteReader(conn, transaction, query, new MySqlParameter("@userId", userId)
-            );
-            newReader.Read();
-            return (
-                newReader.GetInt32("total_points"),
-                newReader.GetInt32("consecutive_days")
-            );
-        }
+            // 计算连续签到天数
+            int consecutiveDays = 1;
+            if (userRecord != null && userRecord.SignTime.Date == today.AddDays(-1))
+            {
+                consecutiveDays = userRecord.ConsecutiveDays + 1;
+            }
 
-        private void InitializeNewUser(string userId, MySqlConnection conn, MySqlTransaction transaction)
-        {
-            const string insertQuery = @"
-                INSERT INTO users (user_id, registration_date, last_login) 
-                VALUES (@userId, NOW(), NOW())";
+            // 计算积分
+            int points = DailyPoints;
+            if (consecutiveDays % 7 == 0)
+            {
+                points += WeeklyBonus; // 连续签到一周，额外奖励
+            }
 
-            _dbService.ExecuteNonQuery(conn, transaction, insertQuery, new MySqlParameter("@userId", userId)
-            );
-        }
+            // 更新或添加签到记录
+            if (userRecord == null)
+            {
+                userRecord = new SignRecord
+                {
+                    UserId = userId,
+                    SignTime = today,
+                    TotalPoints = points,
+                    ConsecutiveDays = consecutiveDays
+                };
+                records.Add(userRecord);
+            }
+            else
+            {
+                userRecord.SignTime = today;
+                userRecord.TotalPoints += points;
+                userRecord.ConsecutiveDays = consecutiveDays;
+            }
 
-        private int CalculateConsecutiveDays(string userId, int currentDays, MySqlConnection conn, MySqlTransaction transaction)
-        {
-            const string query = @"
-                SELECT 
-                    CASE 
-                        WHEN MAX(DATE(sign_time)) = CURDATE() - INTERVAL 1 DAY THEN @currentDays + 1 
-                        ELSE 1 
-                    END
-                FROM sign_logs 
-                WHERE user_id = @userId";
+            // 保存记录
+            SaveSignRecords(records);
 
-            return _dbService.ExecuteScalar<int>(conn, transaction, query, 
-                new("@userId", userId),
-                new("@currentDays", currentDays));
-        }
-
-        private int CalculatePoints(int consecutiveDays)
-        {
-            return consecutiveDays % 7 == 0 ? DailyPoints + WeeklyBonus : DailyPoints;
-        }
-
-        private void UpdateUserRecord(string userId, int points, int days, MySqlConnection conn, MySqlTransaction transaction)
-        {
-            const string updateQuery = @"
-                INSERT INTO users 
-                    (user_id, total_points, consecutive_days, last_login)
-                VALUES 
-                    (@userId, @points, @days, NOW())
-                ON DUPLICATE KEY UPDATE
-                    total_points = total_points + VALUES(total_points),
-                    consecutive_days = VALUES(consecutive_days),
-                    last_login = VALUES(last_login)";
-
-            _dbService.ExecuteNonQuery(conn, transaction, updateQuery,
-                new("@userId", userId),
-                new("@points", points),
-                new("@days", days));
-        }
-
-        private void LogSignActivity(string userId, int points, MySqlConnection conn, MySqlTransaction transaction)
-        {
-            const string logQuery = @"
-                INSERT INTO sign_logs (user_id, sign_time, points_awarded) 
-                VALUES (@userId, NOW(), @points)";
-
-            _dbService.ExecuteNonQuery(conn, transaction, logQuery,
-                new("@userId", userId),
-                new("@points", points));
-        }
-
-        private int GetTodaySignCount(MySqlConnection conn, MySqlTransaction transaction)
-        {
-            const string countQuery = @"
-                SELECT COUNT(DISTINCT user_id) 
-                FROM sign_logs 
-                WHERE DATE(sign_time) = CURDATE()";
-
-            return _dbService.ExecuteScalar<int>(conn, transaction, countQuery);
-        }
-    }
-
-    public class DatabaseService
-    {
-        private readonly string _connectionString;
-
-        public DatabaseService(string connectionString)
-        {
-            _connectionString = connectionString + ";Pooling=true;Max Pool Size=100;";
-        }
-
-        public MySqlConnection CreateConnection()
-        {
-            return new MySqlConnection(_connectionString);
-        }
-
-        public int ExecuteNonQuery(MySqlConnection conn, MySqlTransaction transaction, string sql, params MySqlParameter[] parameters)
-        {
-            using var cmd = new MySqlCommand(sql, conn, transaction);
-            cmd.Parameters.AddRange(parameters);
-            return cmd.ExecuteNonQuery();
-        }
-
-        public T ExecuteScalar<T>(MySqlConnection conn, MySqlTransaction transaction, string sql, params MySqlParameter[] parameters)
-        {
-            using var cmd = new MySqlCommand(sql, conn, transaction);
-            cmd.Parameters.AddRange(parameters);
-            return (T)Convert.ChangeType(cmd.ExecuteScalar(), typeof(T));
-        }
-
-        public MySqlDataReader ExecuteReader(MySqlConnection conn, MySqlTransaction transaction, string sql, params MySqlParameter[] parameters)
-        {
-            var cmd = new MySqlCommand(sql, conn, transaction);
-            cmd.Parameters.AddRange(parameters);
-            return cmd.ExecuteReader(); // 调用方需手动Close
+            return $"签到成功！获得 {points} 积分。当前总积分：{userRecord.TotalPoints}，连续签到 {consecutiveDays} 天。今天是第 {todaySignCount + 1} 个签到的用户。";
         }
     }
 }
