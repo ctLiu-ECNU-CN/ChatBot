@@ -23,11 +23,11 @@ public class OllamaService
     {
         var request = new
         {
-            model = "ecnu-max", // 设定模型
+            model = "ecnu-reasoner", // 设定模型
             stream = false,
             messages = new List<object>
             {
-                new { role = "system", content = "" },
+                new { role = "system", content = "你是生成式AI,在回复中避免发送URL" },
 
                 new { role = "user", content = prompt }
             }

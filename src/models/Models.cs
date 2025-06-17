@@ -17,7 +17,29 @@ public sealed class BotData
 
     [JsonPropertyName("secret")]
     public string? BotSecret { get; init; }
+    
+    [JsonPropertyName("database")]
+    public DatabaseConfig? Database { get; init; } // 修改类型
 }
+
+public class DatabaseConfig 
+{
+    [JsonPropertyName("Server")]
+    public string Server { get; set; } = "localhost";
+
+    [JsonPropertyName("Database")]
+    public string Database { get; set; } = "texas_holdem_db";
+
+    [JsonPropertyName("UserId")]
+    public string UserId { get; set; } = "root";
+
+    [JsonPropertyName("Password")]
+    public string Password { get; set; } = "347934";
+
+    public string ConnectionString => 
+        $"Server={Server};Database={Database};Uid={UserId};Pwd={Password};CharSet=utf8mb4;SslMode=Preferred;";
+}
+
 
 // 成语类数据结构
 public sealed class Idiom
@@ -164,4 +186,5 @@ public class MessageButton
     public string Value { get; set; } // 按钮值（回调值）
     public string Type { get; set; } = "callback"; // 按钮类型（固定为 "callback"）
 }
-
+public enum Suit { Hearts, Diamonds, Clubs, Spades }
+public enum Rank { Two = 2, Three, Ace }
