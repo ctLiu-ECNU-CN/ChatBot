@@ -111,7 +111,7 @@ class Program
             string[] messageParts = message.Content.Trim().Split(' ');
             string userMessage = messageParts[0];
 
-            Console.WriteLine($"收到消息 ID:{message.Id}, Title:{userMessage}, 作者ID:{message.GroupOpenId}");
+            Console.WriteLine($"收到消息:{message.Content}, Title:{userMessage}, 作者ID:{message.GroupOpenId}");
 
             if (userMessage == "/MC地址")
             {
