@@ -14,6 +14,7 @@ using ConsoleApp1.SakuraFrp;
 using ConsoleApp1.services;
 using ConsoleApp1.utils;
 using ConsoleApp1.Utils;
+using Microsoft.EntityFrameworkCore;
 using MyBot.Api;
 using MyBot.Datas;
 using MyBot.Expansions.Bot;
@@ -69,6 +70,7 @@ class Program
         Directory.CreateDirectory(picturePath);
         
         // 读取配置信息
+        var databaseConfigPath = Path.Combine(desktopPath, "机器人","DbConfig.json");
         var sakuraConfigPath = Path.Combine(desktopPath, "机器人","sakura.json");
         var configFilePath = Path.Combine(desktopPath, "机器人", "bot.json");
         var idiomsFilePath = Path.Combine(desktopPath, "机器人", "idiom.json");
@@ -79,6 +81,25 @@ class Program
         var idiomsList = ConfigLoader.LoadIdiomsConfig(idiomsFilePath);
         var nameDict = sakuraConfig.BuildFriendlyNameMapping();// 构建隧道名和地址映射表
         
+        
+        // ===============================
+        // 数据库连接
+        // 创建数据库单例
+        // 配置数据库
+        DatabaseHelper.Instance.SetConfigPath(databaseConfigPath);
+        // 获取单例实例
+        var dbHelper = DatabaseHelper.Instance;
+
+        // 创建数据库上下文
+        using var dbContext = dbHelper.CreateDbContext();
+
+        // 测试执行数据库操作
+        var users = await dbContext.BotUsers.ToListAsync();
+        foreach (var user in users)
+        {
+            Console.WriteLine(user);
+        }
+        // =======================================
         
         var accessInfo = new OpenApiAccessInfo()
         {

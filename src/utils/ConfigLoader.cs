@@ -44,6 +44,24 @@ namespace ConsoleApp1.utils
 
             return sakuraApiKey;
         }
+        
+        public static DbConfig  LoadDatabaseConfig(string dataBaseConfigPath)
+        {
+            if (!File.Exists(dataBaseConfigPath))
+            {
+                throw new FileNotFoundException("配置文件 DbConfig.json 未找到!");
+            }
+
+            var jsonString = File.ReadAllText(dataBaseConfigPath);
+            var dbConfig = JsonSerializer.Deserialize<DbConfig>(jsonString);
+
+            if (dbConfig == null)
+            {
+                throw new InvalidOperationException("解析 DbConfig.json 失败!");
+            }
+
+            return dbConfig;
+        }
 
         public static List<Idiom> LoadIdiomsConfig(string idiomsFilePath)
         {
