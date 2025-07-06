@@ -111,7 +111,7 @@ class Program
             string[] messageParts = message.Content.Trim().Split(' ');
             string userMessage = messageParts[0];
 
-            Console.WriteLine($"收到消息 ID:{message.Id}, Title:{userMessage}, 作者:{message.Author}");
+            Console.WriteLine($"收到消息 ID:{message.Id}, Title:{userMessage}, 作者ID:{message.GroupOpenId}");
 
             if (userMessage == "/MC地址")
             {
@@ -138,7 +138,7 @@ class Program
 
                 // 最终的 Markdown 文本（可直接作为参数传入）
                 string mdText = markdownContent.ToString();
-                var convertAndSaveImagepath = await md2ImageService.ConvertAndSaveImageAsync(mdText, "测试生成的图片");
+                var convertAndSaveImagepath = await md2ImageService.ConvertAndSaveImageAsync(mdText, "服务器地址");
                 if (convertAndSaveImagepath != null)
                 {
                     // 上传到 COS
