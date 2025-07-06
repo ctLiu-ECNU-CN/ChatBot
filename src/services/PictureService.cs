@@ -11,7 +11,7 @@ using COSXML.Utils;
 using MyBot.Api;
 using MyBot.Models.MessageModels;
 
-namespace MyBot.Services;
+
 
 public static class CloudObjectStorage
 {
