@@ -1,113 +1,64 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
+﻿using ConsoleApp1.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 using ConsoleApp1.models;
-using MyBot.Models;
 
-namespace MyBot.Services
+namespace ConsoleApp1.Services
 {
+    /// <summary>
+    /// 签到服务类，处理用户签到逻辑
+    /// </summary>
     public class SignService
     {
-        private readonly string _signRecordsFilePath;
-        private const int DailyPoints = 10; // 每日签到积分
-        private const int WeeklyBonus = 50; // 连续签到一周的额外积分
+        private readonly JBotDbContext _dbContext;
 
-        public SignService(string signRecordsFilePath)
+        /// <summary>
+        /// 构造函数注入数据库上下文
+        /// </summary>
+        /// <param name="dbContext">数据库上下文实例</param>
+        public SignService(JBotDbContext dbContext)
         {
-            _signRecordsFilePath = signRecordsFilePath;
-
-            // 如果文件不存在，则创建一个空列表
-            if (!File.Exists(_signRecordsFilePath))
-            {
-                File.WriteAllText(_signRecordsFilePath, "[]");
-            }
+            _dbContext = dbContext;
         }
 
-        // 获取所有签到记录
-        private List<SignRecord> LoadSignRecords()
+        /// <summary>
+        /// 处理用户签到逻辑
+        /// </summary>
+        /// <param name="userId">用户ID（对应OpenGroupID）</param>
+        /// <param name="nickname">用户昵称（首次签到时必填）</param>
+        /// <param name="region">用户地区（可选）</param>
+        /// <returns>签到结果消息</returns>
+        public async Task<string> ProcessSignAsync(string userId)
         {
-            var jsonString = File.ReadAllText(_signRecordsFilePath);
+            // 1. 检查用户是否已存在于数据库
+            var existingUser = await _dbContext.BotUsers
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
-            // 如果文件内容为空，则返回一个空列表
-            if (string.IsNullOrWhiteSpace(jsonString))
+            if (existingUser != null)
             {
-                return new List<SignRecord>();
-            }
-
-            try
-            {
-                return JsonSerializer.Deserialize<List<SignRecord>>(jsonString) ?? new List<SignRecord>();
-            }
-            catch (JsonException ex)
-            {
-                Console.WriteLine($"JSON 解析失败: {ex.Message}");
-                return new List<SignRecord>();
-            }
-        }
-
-        // 保存签到记录
-        private void SaveSignRecords(List<SignRecord> records)
-        {
-            var jsonString = JsonSerializer.Serialize(records, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_signRecordsFilePath, jsonString);
-        }
-
-        // 用户签到
-        public string Sign(string userId)
-        {
-            var records = LoadSignRecords();
-
-            // 检查用户是否已经签到过
-            var today = DateTime.Today;
-            var userRecord = records.FirstOrDefault(r => r.UserId == userId);
-
-            if (userRecord != null && userRecord.SignTime.Date == today)
-            {
-                return "今日已签到，请明天再来！";
-            }
-
-            // 统计当天签到人数
-            int todaySignCount = records.Count(r => r.SignTime.Date == today);
-
-            // 计算连续签到天数
-            int consecutiveDays = 1;
-            if (userRecord != null && userRecord.SignTime.Date == today.AddDays(-1))
-            {
-                consecutiveDays = userRecord.ConsecutiveDays + 1;
-            }
-
-            // 计算积分
-            int points = DailyPoints;
-            if (consecutiveDays % 7 == 0)
-            {
-                points += WeeklyBonus; // 连续签到一周，额外奖励
-            }
-
-            // 更新或添加签到记录
-            if (userRecord == null)
-            {
-                userRecord = new SignRecord
+                // 2. 用户已存在：更新最后活跃时间并返回问候消息
+                existingUser.LastActiveTime = DateTime.Now;
+                await _dbContext.SaveChangesAsync();
+                if (string.IsNullOrWhiteSpace(existingUser.Nickname))
                 {
-                    UserId = userId,
-                    SignTime = today,
-                    TotalPoints = points,
-                    ConsecutiveDays = consecutiveDays
-                };
-                records.Add(userRecord);
+                return $"欢迎回来！今天也要元气满满哦~, 可以绑定昵称噢！";
+                    
+                }
+                return $"欢迎回来，{existingUser.Nickname}！今天也要元气满满哦~";
             }
             else
             {
-                userRecord.SignTime = today;
-                userRecord.TotalPoints += points;
-                userRecord.ConsecutiveDays = consecutiveDays;
+                var newUser = new BotUser
+                {
+                    Id = userId,
+                    LastActiveTime = DateTime.Now,
+                    // CreatedAt 会由数据库自动生成（DEFAULT CURRENT_TIMESTAMP）
+                };
+
+                _dbContext.BotUsers.Add(newUser);
+                await _dbContext.SaveChangesAsync();
+                return $"🎉 欢迎新用户 完成首次签到！已为你注册账号~";
             }
-
-            // 保存记录
-            SaveSignRecords(records);
-
-            return $"签到成功！获得 {points} 积分。当前总积分：{userRecord.TotalPoints}，连续签到 {consecutiveDays} 天。今天是第 {todaySignCount + 1} 个签到的用户。";
         }
     }
 }

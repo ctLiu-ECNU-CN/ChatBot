@@ -4,6 +4,8 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Net;
+
 
 namespace ConsoleApp1.services
 {
@@ -15,10 +17,28 @@ namespace ConsoleApp1.services
         // 配置图片转换服务
         private readonly string _apiUrl = "http://localhost:3000/api/markdown-to-image";
 
+        // public MarkdownImageService(string pictureUrl)
+        // {
+        //     saveDirectory = pictureUrl;
+        //     _httpClient = new HttpClient();
+        //     _httpClient.DefaultRequestHeaders.Accept.Add(
+        //         new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        // }
         public MarkdownImageService(string pictureUrl)
         {
             saveDirectory = pictureUrl;
-            _httpClient = new HttpClient();
+            var proxy = new WebProxy("http://192.168.5.10:10810")
+            {
+                BypassProxyOnLocal = true, // 本地地址绕过代理
+                BypassList = new[] { "localhost", "127.0.0.1" }
+            };
+
+            var handler = new HttpClientHandler
+            {
+                UseProxy = true,
+                Proxy = proxy
+            };
+            _httpClient = new HttpClient(handler); // 使用带配置的handler
             _httpClient.DefaultRequestHeaders.Accept.Add(
                 new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         }

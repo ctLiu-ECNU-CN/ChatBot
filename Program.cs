@@ -12,6 +12,7 @@ using ConsoleApp1.config;
 using ConsoleApp1.models;
 using ConsoleApp1.SakuraFrp;
 using ConsoleApp1.services;
+using ConsoleApp1.Services;
 using ConsoleApp1.utils;
 using ConsoleApp1.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -93,13 +94,13 @@ class Program
         // 创建数据库上下文
         using var dbContext = dbHelper.CreateDbContext();
 
-        // 测试执行数据库操作
-        var users = await dbContext.BotUsers.ToListAsync();
-        foreach (var user in users)
-        {
-            Console.WriteLine(user);
-        }
-        // =======================================
+        // // 测试执行数据库操作
+        // var users = await dbContext.BotUsers.ToListAsync();
+        // foreach (var user in users)
+        // {
+        //     Console.WriteLine(user);
+        // }
+        // // =======================================
         
         var accessInfo = new OpenApiAccessInfo()
         {
@@ -118,7 +119,7 @@ class Program
         var md2ImageService = new MarkdownImageService(picturePath);
         var bot = new ChannelBot(apiProvider);
         var idiomGameService = new IdiomGameService(idiomsList);
-        var signService = new SignService(signFilePath);
+        var signService = new SignService(dbContext);
         var ollamaService = new OllamaService();
         var sakuraService = new SakuraFrpService(sakuraConfig.LogDirectory);
 
@@ -130,12 +131,14 @@ class Program
         {
             var api = apiProvider.GetChatMessageApi();
             string[] messageParts = message.Content.Trim().Split(' ');
-            string userMessage = messageParts[0];
+            string command = messageParts[0];
 
-            Console.WriteLine($"收到消息:{message.Content}, Title:{userMessage}, 作者ID:{message.GroupOpenId}");
+            Console.WriteLine($"收到消息:{message.Content}, 命令:{command}, 作者ID:{message.GroupOpenId}");
 
-            if (userMessage == "/MC地址")
+            if (command == "/MC地址")
             {
+                sakuraConfig = ConfigLoader.LoadSakuraConfig(sakuraConfigPath);
+                nameDict = sakuraConfig.BuildFriendlyNameMapping();// 构建隧道名和地址映射表
                 var addresses = await sakuraService.GetAllTunnelAddressesAsync();
                 var addressFormatter =AddressFormatter.FormatAndFilterAddresses(addresses, nameDict);
                 var markdownContent = new StringBuilder();
@@ -176,6 +179,12 @@ class Program
                 }
 
                 Console.WriteLine(convertAndSaveImagepath);
+            }
+            
+            else if (command == "/问候")
+            {
+                var response = await signService.ProcessSignAsync(message.GroupOpenId);
+                await api.SendGroupMessageAsync(message.GroupOpenId, response, passiveMsgId: message.Id);
             }
 
         // if (userMessage == "/成语接龙")
